@@ -2,7 +2,7 @@
 
 # This script identifies cost optimization opportunities using AWS Cost Explorer and other services
 
-set -e
+# set -e removed to allow graceful error handling
 
 # Configuration
 ACCOUNT_NAME=${ACCOUNT_NAME:-"unknown"}
@@ -21,47 +21,71 @@ function get_cost_optimization_recommendations() {
 
     # Get rightsizing recommendations
     echo "Getting rightsizing recommendations..."
-    aws ce get-rightsizing-recommendation \
+    if aws ce get-rightsizing-recommendation \
         --service EC2-Instance \
-        --configuration RecommendationTarget=SAME_INSTANCE_FAMILY \
-        --output json > "$OUTPUT_DIR/rightsizing_recommendations_${TIMESTAMP}.json"
+        --configuration '{"RecommendationTarget":"SAME_INSTANCE_FAMILY","BenefitsConsidered":true}' \
+        --output json > "$OUTPUT_DIR/rightsizing_recommendations_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Rightsizing recommendations retrieved successfully"
+    else
+        echo "⚠ Rightsizing recommendations not available (may require EC2 instances to analyze)"
+    fi
 
     # Get Reserved Instance recommendations
     echo "Getting Reserved Instance recommendations..."
-    aws ce get-reservation-purchase-recommendation \
+    if aws ce get-reservation-purchase-recommendation \
         --service EC2-Instance \
-        --output json > "$OUTPUT_DIR/ri_purchase_recommendations_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/ri_purchase_recommendations_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Reserved Instance recommendations retrieved successfully"
+    else
+        echo "⚠ Reserved Instance recommendations not available"
+    fi
 
     # Get Savings Plans recommendations
     echo "Getting Savings Plans recommendations..."
-    aws ce get-savings-plans-purchase-recommendation \
+    if aws ce get-savings-plans-purchase-recommendation \
         --savings-plans-type COMPUTE_SP \
         --term-in-years ONE_YEAR \
         --payment-option NO_UPFRONT \
-        --output json > "$OUTPUT_DIR/savings_plans_recommendations_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/savings_plans_recommendations_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Savings Plans recommendations retrieved successfully"
+    else
+        echo "⚠ Savings Plans recommendations not available"
+    fi
 
     # Get usage-based recommendations
     echo "Getting usage-based cost recommendations..."
-    aws ce get-usage-forecast \
+    if aws ce get-usage-forecast \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
         --metric UsageQuantity \
-        --output json > "$OUTPUT_DIR/usage_forecast_optimization_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/usage_forecast_optimization_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Usage forecast retrieved successfully"
+    else
+        echo "⚠ Usage forecast not available"
+    fi
 
     # Analyze top cost drivers
     echo "Analyzing top cost drivers..."
-    aws ce get-cost-and-usage \
+    if aws ce get-cost-and-usage \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
         --metrics BlendedCost \
         --group-by Type=DIMENSION,Key=SERVICE \
-        --output json > "$OUTPUT_DIR/top_cost_drivers_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/top_cost_drivers_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Top cost drivers analysis completed successfully"
+    else
+        echo "⚠ Top cost drivers analysis failed"
+    fi
 
     # Get cost anomaly detection
     echo "Checking for cost anomalies..."
-    aws ce get-anomalies \
+    if aws ce get-anomalies \
         --date-interval StartDate="$START_DATE",EndDate="$END_DATE" \
-        --output json > "$OUTPUT_DIR/cost_anomalies_${TIMESTAMP}.json" 2>/dev/null || echo "Cost anomaly detection not available"
+        --output json > "$OUTPUT_DIR/cost_anomalies_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Cost anomaly detection completed successfully"
+    else
+        echo "⚠ Cost anomaly detection not available (may need to be enabled first)"
+    fi
 
     echo ""
     echo "=== Cost Optimization Summary ==="

@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # AWS CLI container for Account 1
+  awscli-account1:
+    image: amazon/aws-cli:latest
+    container_name: aws-finops-account1
+    volumes:
+      - ./aws-credentials/account1:/root/.aws:ro
+      - ./aws-scripts:/aws-scripts:ro
+      - ./output/account1:/output
+    working_dir: /aws-scripts
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - ACCOUNT_NAME=account1
+    entrypoint: ["/bin/bash"]
+    tty: true
+    stdin_open: true
+    networks:
+      - aws-finops-network
+
+  # AWS CLI container for Account 2
+  awscli-account2:
+    image: amazon/aws-cli:latest
+    container_name: aws-finops-account2
+    volumes:
+      - ./aws-credentials/account2:/root/.aws:ro
+      - ./aws-scripts:/aws-scripts:ro
+      - ./output/account2:/output
+    working_dir: /aws-scripts
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - ACCOUNT_NAME=account2
+    entrypoint: ["/bin/bash"]
+    tty: true
+    stdin_open: true
+    networks:
+      - aws-finops-network
+
+  # AWS CLI container for Account 3
+  awscli-account3:
+    image: amazon/aws-cli:latest
+    container_name: aws-finops-account3
+    volumes:
+      - ./aws-credentials/account3:/root/.aws:ro
+      - ./aws-scripts:/aws-scripts:ro
+      - ./output/account3:/output
+    working_dir: /aws-scripts
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - ACCOUNT_NAME=account3
+    entrypoint: ["/bin/bash"]
+    tty: true
+    stdin_open: true
+    networks:
+      - aws-finops-network
+
+  # FinOps Aggregator container (Master Account)
+  finops-aggregator:
+    image: amazon/aws-cli:latest
+    container_name: aws-finops-aggregator
+    volumes:
+      - ./aws-credentials/master:/root/.aws:ro
+      - ./aws-scripts:/aws-scripts:ro
+      - ./output/aggregated:/output
+      - ./output:/all-outputs:ro
+    working_dir: /aws-scripts
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - ACCOUNT_NAME=master
+      - FINOPS_ROLE=aggregator
+    entrypoint: ["/bin/bash"]
+    tty: true
+    stdin_open: true
+    networks:
+      - aws-finops-network
+
+networks:
+  aws-finops-network:
+    driver: bridge

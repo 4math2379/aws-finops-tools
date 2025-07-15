@@ -1,0 +1,58 @@
+# AWS Credentials - NEVER commit these
+aws-credentials/
+*.pem
+*.key
+*_rsa
+*_dsa
+*_ecdsa
+*_ed25519
+
+# Output files
+output/
+*.json
+*.csv
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Cost reports (may contain sensitive data)
+cost_reports/
+financial_reports/
+billing_reports/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.backup
+*.bak
+*.orig

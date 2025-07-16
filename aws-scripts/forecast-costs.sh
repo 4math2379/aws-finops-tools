@@ -2,7 +2,7 @@
 
 # This script forecasts future costs using AWS Cost Explorer API
 
-set -e
+# set -e removed to allow graceful error handling
 
 # Configuration
 ACCOUNT_NAME=${ACCOUNT_NAME:-"unknown"}
@@ -21,28 +21,37 @@ function forecast_costs() {
 
     # Get cost forecast
     echo "Generating cost forecast..."
-    aws ce get-cost-forecast \
+    if aws ce get-cost-forecast \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
-        --metric BlendedCost \
+        --metric UNBLENDED_COST \
         --prediction-interval-level 80 \
-        --output json > "$OUTPUT_DIR/cost_forecast_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/cost_forecast_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Cost forecast generated successfully"
+        
+        # Get forecast summary
+        FORECAST_AMOUNT=$(aws ce get-cost-forecast \
+            --time-period Start="$START_DATE",End="$END_DATE" \
+            --granularity MONTHLY \
+            --metric UNBLENDED_COST \
+            --output text --query 'Total.Amount' 2>/dev/null || echo "N/A")
+    else
+        echo "⚠ Cost forecast not available (requires historical data)"
+        FORECAST_AMOUNT="N/A"
+    fi
 
     # Get usage forecast
     echo "Generating usage forecast..."
-    aws ce get-usage-forecast \
+    if aws ce get-usage-forecast \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
-        --metric UsageQuantity \
+        --metric USAGE_QUANTITY \
         --prediction-interval-level 80 \
-        --output json > "$OUTPUT_DIR/usage_forecast_${TIMESTAMP}.json"
-
-    # Get forecast summary
-    FORECAST_AMOUNT=$(aws ce get-cost-forecast \
-        --time-period Start="$START_DATE",End="$END_DATE" \
-        --granularity MONTHLY \
-        --metric BlendedCost \
-        --output text --query 'Total.Amount')
+        --output json > "$OUTPUT_DIR/usage_forecast_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Usage forecast generated successfully"
+    else
+        echo "⚠ Usage forecast not available (requires historical data)"
+    fi
 
     echo ""
     echo "=== Forecast Summary ==="

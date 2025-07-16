@@ -135,8 +135,12 @@ async function loadData() {
         const costData = await fetchLatestCostData();
         
         if (costData) {
+            console.log('Loaded cost data:', costData);
             updateMetrics(costData);
             updateCharts(costData);
+        } else {
+            console.warn('No cost data available');
+            showError('No cost data available. Please run the FinOps scripts to generate data.');
         }
         
         // Update last refresh time
@@ -276,9 +280,22 @@ function updateDailyCostChart(data) {
     const labels = [];
     const costs = [];
     
+    if (!data || !data.ResultsByTime || !Array.isArray(data.ResultsByTime)) {
+        console.warn('Invalid data for daily cost chart:', data);
+        return;
+    }
+    
     data.ResultsByTime.forEach(item => {
-        labels.push(moment(item.TimePeriod.Start).format('MMM DD'));
-        costs.push(parseFloat(item.Total.BlendedCost.Amount));
+        try {
+            if (item && item.TimePeriod && item.TimePeriod.Start && 
+                item.Total && item.Total.BlendedCost && item.Total.BlendedCost.Amount) {
+                labels.push(moment(item.TimePeriod.Start).format('MMM DD'));
+                const amount = parseFloat(item.Total.BlendedCost.Amount);
+                costs.push(isNaN(amount) ? 0 : amount);
+            }
+        } catch (error) {
+            console.warn('Error processing daily cost item:', item, error);
+        }
     });
     
     charts.dailyCost.data.labels = labels;
@@ -289,12 +306,32 @@ function updateDailyCostChart(data) {
 function updateServiceChart(data) {
     const services = {};
     
+    if (!data || !data.ResultsByTime || !Array.isArray(data.ResultsByTime)) {
+        console.warn('Invalid data for service chart:', data);
+        return;
+    }
+    
     data.ResultsByTime.forEach(period => {
-        period.Groups.forEach(group => {
-            const service = group.Keys[0];
-            const cost = parseFloat(group.Metrics.BlendedCost.Amount);
-            services[service] = (services[service] || 0) + cost;
-        });
+        try {
+            if (period && period.Groups && Array.isArray(period.Groups)) {
+                period.Groups.forEach(group => {
+                    try {
+                        if (group && group.Keys && group.Keys[0] && 
+                            group.Metrics && group.Metrics.BlendedCost && group.Metrics.BlendedCost.Amount) {
+                            const service = group.Keys[0];
+                            const cost = parseFloat(group.Metrics.BlendedCost.Amount);
+                            if (!isNaN(cost)) {
+                                services[service] = (services[service] || 0) + cost;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Error processing service group:', group, error);
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Error processing service period:', period, error);
+        }
     });
     
     const labels = Object.keys(services);
@@ -308,12 +345,32 @@ function updateServiceChart(data) {
 function updateRegionChart(data) {
     const regions = {};
     
+    if (!data || !data.ResultsByTime || !Array.isArray(data.ResultsByTime)) {
+        console.warn('Invalid data for region chart:', data);
+        return;
+    }
+    
     data.ResultsByTime.forEach(period => {
-        period.Groups.forEach(group => {
-            const region = group.Keys[0];
-            const cost = parseFloat(group.Metrics.BlendedCost.Amount);
-            regions[region] = (regions[region] || 0) + cost;
-        });
+        try {
+            if (period && period.Groups && Array.isArray(period.Groups)) {
+                period.Groups.forEach(group => {
+                    try {
+                        if (group && group.Keys && group.Keys[0] && 
+                            group.Metrics && group.Metrics.BlendedCost && group.Metrics.BlendedCost.Amount) {
+                            const region = group.Keys[0];
+                            const cost = parseFloat(group.Metrics.BlendedCost.Amount);
+                            if (!isNaN(cost)) {
+                                regions[region] = (regions[region] || 0) + cost;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Error processing region group:', group, error);
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Error processing region period:', period, error);
+        }
     });
     
     const labels = Object.keys(regions);
@@ -327,8 +384,22 @@ function updateRegionChart(data) {
 function calculateTotalCost(data) {
     let total = 0;
     
+    if (!data || !data.ResultsByTime || !Array.isArray(data.ResultsByTime)) {
+        console.warn('Invalid data structure for cost calculation:', data);
+        return 0;
+    }
+    
     data.ResultsByTime.forEach(item => {
-        total += parseFloat(item.Total.BlendedCost.Amount);
+        try {
+            if (item && item.Total && item.Total.BlendedCost && item.Total.BlendedCost.Amount) {
+                const amount = parseFloat(item.Total.BlendedCost.Amount);
+                if (!isNaN(amount)) {
+                    total += amount;
+                }
+            }
+        } catch (error) {
+            console.warn('Error processing cost item:', item, error);
+        }
     });
     
     return total;

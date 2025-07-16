@@ -57,7 +57,7 @@ function get_cost_optimization_recommendations() {
     if aws ce get-usage-forecast \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
-        --metric UsageQuantity \
+        --metric USAGE_QUANTITY \
         --output json > "$OUTPUT_DIR/usage_forecast_optimization_${TIMESTAMP}.json" 2>/dev/null; then
         echo "✓ Usage forecast retrieved successfully"
     else

@@ -41,9 +41,16 @@ def load_json_file(filepath: str) -> Optional[Dict]:
     """Load and parse JSON file"""
     try:
         with open(filepath, 'r') as f:
-            return json.load(f)
+            content = f.read().strip()
+            if not content:
+                print(f"Warning: Empty file {filepath}")
+                return None
+            return json.loads(content)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Error loading {filepath}: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error loading {filepath}: {e}")
         return None
 
 def get_file_info(filepath: str) -> Dict:
@@ -292,6 +299,25 @@ def search_files():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api', methods=['GET'])
+def api_root():
+    """API root endpoint - list available endpoints"""
+    endpoints = {
+        'health': '/api/health',
+        'accounts': '/api/accounts',
+        'files': '/api/files',
+        'latest_data': '/api/latest-data',
+        'cost_summary': '/api/cost-summary',
+        'metrics': '/api/metrics',
+        'search': '/api/search',
+        'file_access': '/api/file/{account}/{filename}'
+    }
+    return jsonify({
+        'message': 'AWS FinOps API Server',
+        'version': '1.0.0',
+        'endpoints': endpoints
+    })
 
 @app.errorhandler(404)
 def not_found(error):

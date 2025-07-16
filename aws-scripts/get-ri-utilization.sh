@@ -35,7 +35,9 @@ function get_ri_utilization() {
             --output text --query 'Total.UtilizationPercentage' 2>/dev/null || echo "N/A")
     else
         echo "⚠ Reserved Instance utilization not available (no active RIs found)"
-        AVG_UTILIZATION="N/A"
+        # Create empty JSON structure
+        echo '{"Total": {"UtilizationPercentage": "0"}, "ResultsByTime": []}' > "$OUTPUT_DIR/ri_utilization_${TIMESTAMP}.json"
+        AVG_UTILIZATION="0"
     fi
 
     # Get RI coverage
@@ -48,6 +50,7 @@ function get_ri_utilization() {
         echo "✓ Reserved Instance coverage retrieved successfully"
     else
         echo "⚠ Reserved Instance coverage not available"
+        echo '{"ResultsByTime": []}' > "$OUTPUT_DIR/ri_coverage_${TIMESTAMP}.json"
     fi
 
     # Get RI recommendations
@@ -58,6 +61,7 @@ function get_ri_utilization() {
         echo "✓ Reserved Instance recommendations retrieved successfully"
     else
         echo "⚠ Reserved Instance recommendations not available"
+        echo '{"Recommendations": []}' > "$OUTPUT_DIR/ri_recommendations_${TIMESTAMP}.json"
     fi
 
     echo ""

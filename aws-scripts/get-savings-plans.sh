@@ -28,6 +28,8 @@ function get_savings_plans() {
         echo "✓ Savings Plans utilization retrieved successfully"
     else
         echo "⚠ Savings Plans utilization not available (no active Savings Plans found)"
+        # Create empty JSON structure
+        echo '{"Total": {"Utilization": {"UtilizationPercentage": "0"}}, "ResultsByTime": []}' > "$OUTPUT_DIR/savings_plans_utilization_${TIMESTAMP}.json"
     fi
 
     # Get Savings Plans coverage
@@ -40,6 +42,7 @@ function get_savings_plans() {
         echo "✓ Savings Plans coverage retrieved successfully"
     else
         echo "⚠ Savings Plans coverage not available"
+        echo '{"ResultsByTime": []}' > "$OUTPUT_DIR/savings_plans_coverage_${TIMESTAMP}.json"
     fi
 
     # Get Savings Plans purchase recommendations
@@ -52,6 +55,7 @@ function get_savings_plans() {
         echo "✓ Savings Plans purchase recommendations retrieved successfully"
     else
         echo "⚠ Savings Plans purchase recommendations not available"
+        echo '{"Recommendations": []}' > "$OUTPUT_DIR/savings_plans_purchase_recommendations_${TIMESTAMP}.json"
     fi
 
     # Get Savings Plans utilization summary

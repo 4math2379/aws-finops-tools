@@ -14,9 +14,18 @@ function get_budget_status() {
     echo "Account: $ACCOUNT_NAME"
     echo ""
 
+    # Get current account ID
+    echo "Getting account ID..."
+    if ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
+        echo "✓ Account ID retrieved: $ACCOUNT_ID"
+    else
+        echo "⚠ Unable to get account ID (check AWS credentials)"
+        return 1
+    fi
+
     # List all budgets
     echo "Fetching budget details..."
-    if BUDGET_NAMES=$(aws budgets describe-budgets --query 'Budgets[].BudgetName' --output text 2>/dev/null); then
+    if BUDGET_NAMES=$(aws budgets describe-budgets --account-id "$ACCOUNT_ID" --query 'Budgets[].BudgetName' --output text 2>/dev/null); then
         echo "✓ Budget list retrieved successfully"
         
         if [ -z "$BUDGET_NAMES" ] || [ "$BUDGET_NAMES" = "None" ]; then
@@ -25,6 +34,7 @@ function get_budget_status() {
             for budget_name in $BUDGET_NAMES; do
                 echo "Checking status for budget: $budget_name"
                 if BUDGET_STATUS=$(aws budgets describe-budget-performance-history \
+                    --account-id "$ACCOUNT_ID" \
                     --budget-name "$budget_name" \
                     --query 'BudgetPerformanceHistory.BudgetedAndActualAmounts[].ActualAmount.Amount' \
                     --output text 2>/dev/null); then

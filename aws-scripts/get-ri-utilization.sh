@@ -2,7 +2,7 @@
 
 # This script retrieves Reserved Instance utilization data
 
-set -e
+# set -e removed to allow graceful error handling
 
 # Configuration
 ACCOUNT_NAME=${ACCOUNT_NAME:-"unknown"}
@@ -21,31 +21,44 @@ function get_ri_utilization() {
 
     # Get RI utilization
     echo "Getting Reserved Instance utilization..."
-    aws ce get-reservation-utilization \
+    if aws ce get-reservation-utilization \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
-        --group-by Type=DIMENSION,Key=SERVICE \
-        --output json > "$OUTPUT_DIR/ri_utilization_${TIMESTAMP}.json"
+        --group-by Type=DIMENSION,Key=SUBSCRIPTION_ID \
+        --output json > "$OUTPUT_DIR/ri_utilization_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Reserved Instance utilization retrieved successfully"
+        
+        # Calculate average utilization
+        AVG_UTILIZATION=$(aws ce get-reservation-utilization \
+            --time-period Start="$START_DATE",End="$END_DATE" \
+            --granularity MONTHLY \
+            --output text --query 'Total.UtilizationPercentage' 2>/dev/null || echo "N/A")
+    else
+        echo "⚠ Reserved Instance utilization not available (no active RIs found)"
+        AVG_UTILIZATION="N/A"
+    fi
 
     # Get RI coverage
     echo "Getting Reserved Instance coverage..."
-    aws ce get-reservation-coverage \
+    if aws ce get-reservation-coverage \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
         --group-by Type=DIMENSION,Key=SERVICE \
-        --output json > "$OUTPUT_DIR/ri_coverage_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/ri_coverage_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Reserved Instance coverage retrieved successfully"
+    else
+        echo "⚠ Reserved Instance coverage not available"
+    fi
 
     # Get RI recommendations
     echo "Getting Reserved Instance recommendations..."
-    aws ce get-reservation-purchase-recommendation \
+    if aws ce get-reservation-purchase-recommendation \
         --service EC2-Instance \
-        --output json > "$OUTPUT_DIR/ri_recommendations_${TIMESTAMP}.json"
-
-    # Calculate average utilization
-    AVG_UTILIZATION=$(aws ce get-reservation-utilization \
-        --time-period Start="$START_DATE",End="$END_DATE" \
-        --granularity MONTHLY \
-        --output text --query 'Total.UtilizationPercentage')
+        --output json > "$OUTPUT_DIR/ri_recommendations_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Reserved Instance recommendations retrieved successfully"
+    else
+        echo "⚠ Reserved Instance recommendations not available"
+    fi
 
     echo ""
     echo "=== RI Utilization Summary ==="

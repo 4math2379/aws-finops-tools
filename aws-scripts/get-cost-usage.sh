@@ -2,7 +2,7 @@
 
 # This script retrieves cost and usage data using AWS Cost Explorer API
 
-set -e
+# set -e removed to allow graceful error handling
 
 # Configuration
 ACCOUNT_NAME=${ACCOUNT_NAME:-"unknown"}
@@ -21,30 +21,42 @@ function get_cost_usage() {
 
     # Get daily costs for the last 30 days
     echo "Getting daily costs..."
-    aws ce get-cost-and-usage \
+    if aws ce get-cost-and-usage \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity DAILY \
         --metrics BlendedCost UnblendedCost \
         --group-by Type=DIMENSION,Key=SERVICE \
-        --output json > "$OUTPUT_DIR/daily_costs_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/daily_costs_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Daily costs retrieved successfully"
+    else
+        echo "⚠ Daily costs not available"
+    fi
 
     # Get monthly costs by service
     echo "Getting monthly costs by service..."
-    aws ce get-cost-and-usage \
+    if aws ce get-cost-and-usage \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
         --metrics BlendedCost UnblendedCost \
         --group-by Type=DIMENSION,Key=SERVICE \
-        --output json > "$OUTPUT_DIR/monthly_costs_by_service_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/monthly_costs_by_service_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Monthly costs by service retrieved successfully"
+    else
+        echo "⚠ Monthly costs by service not available"
+    fi
 
     # Get costs by region
     echo "Getting costs by region..."
-    aws ce get-cost-and-usage \
+    if aws ce get-cost-and-usage \
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
         --metrics BlendedCost \
         --group-by Type=DIMENSION,Key=REGION \
-        --output json > "$OUTPUT_DIR/costs_by_region_${TIMESTAMP}.json"
+        --output json > "$OUTPUT_DIR/costs_by_region_${TIMESTAMP}.json" 2>/dev/null; then
+        echo "✓ Costs by region retrieved successfully"
+    else
+        echo "⚠ Costs by region not available"
+    fi
 
     # Get total cost for the period
     echo "Getting total cost summary..."
@@ -52,7 +64,7 @@ function get_cost_usage() {
         --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity MONTHLY \
         --metrics BlendedCost \
-        --output text --query 'ResultsByTime[0].Total.BlendedCost.Amount')
+        --output text --query 'ResultsByTime[0].Total.BlendedCost.Amount' 2>/dev/null || echo "N/A")
 
     echo ""
     echo "=== Cost Summary ==="

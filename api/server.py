@@ -134,6 +134,7 @@ def get_latest_data():
         region_costs_file = get_latest_file('costs_by_region_*.json', account)
         forecast_file = get_latest_file('cost_forecast_*.json', account)
         ri_file = get_latest_file('ri_utilization_*.json', account)
+        sp_file = get_latest_file('savings_plans_utilization_*.json', account)
         
         data = {}
         
@@ -151,6 +152,9 @@ def get_latest_data():
         
         if ri_file:
             data['ri_utilization'] = load_json_file(ri_file)
+        
+        if sp_file:
+            data['savings_plans'] = load_json_file(sp_file)
         
         return jsonify(data)
     except Exception as e:
@@ -247,6 +251,13 @@ def get_metrics():
             ri_data = load_json_file(ri_file)
             if ri_data and 'Total' in ri_data:
                 metrics['ri_utilization'] = float(ri_data['Total']['UtilizationPercentage'])
+        
+        # Get Savings Plans utilization
+        sp_file = get_latest_file('savings_plans_utilization_*.json', account)
+        if sp_file:
+            sp_data = load_json_file(sp_file)
+            if sp_data and 'Total' in sp_data and 'Utilization' in sp_data['Total']:
+                metrics['sp_utilization'] = float(sp_data['Total']['Utilization']['UtilizationPercentage'])
         
         return jsonify(metrics)
     except Exception as e:

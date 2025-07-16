@@ -220,35 +220,55 @@ async function loadMostRecentFile(files, prefix) {
 
 function updateMetrics(data) {
     // Update total cost
-    if (data.dailyCosts && data.dailyCosts.ResultsByTime) {
-        const totalCost = calculateTotalCost(data.dailyCosts);
+    if (data.daily_costs && data.daily_costs.ResultsByTime) {
+        const totalCost = calculateTotalCost(data.daily_costs);
         document.getElementById('total-cost').textContent = '$' + totalCost.toFixed(2);
+    } else {
+        document.getElementById('total-cost').textContent = 'N/A';
     }
     
-    // Update forecasted cost (mock data for now)
-    document.getElementById('forecasted-cost').textContent = '$' + (Math.random() * 10000).toFixed(2);
+    // Update forecasted cost from real data
+    if (data.forecast && data.forecast.Total) {
+        const forecastAmount = parseFloat(data.forecast.Total.Amount);
+        document.getElementById('forecasted-cost').textContent = '$' + forecastAmount.toFixed(2);
+    } else {
+        document.getElementById('forecasted-cost').textContent = 'N/A';
+    }
     
-    // Update RI utilization (mock data for now)
-    document.getElementById('ri-utilization').textContent = (Math.random() * 100).toFixed(1) + '%';
+    // Update RI utilization from real data
+    if (data.ri_utilization && data.ri_utilization.Total) {
+        const riUtilization = parseFloat(data.ri_utilization.Total.UtilizationPercentage);
+        document.getElementById('ri-utilization').textContent = riUtilization.toFixed(1) + '%';
+    } else {
+        document.getElementById('ri-utilization').textContent = 'N/A';
+    }
     
-    // Update Savings Plans utilization (mock data for now)
-    document.getElementById('sp-utilization').textContent = (Math.random() * 100).toFixed(1) + '%';
+    // Update Savings Plans utilization from real data
+    if (data.savings_plans && data.savings_plans.Total && data.savings_plans.Total.Utilization) {
+        const spUtilization = parseFloat(data.savings_plans.Total.Utilization.UtilizationPercentage);
+        document.getElementById('sp-utilization').textContent = spUtilization.toFixed(1) + '%';
+    } else {
+        document.getElementById('sp-utilization').textContent = 'N/A';
+    }
+    
+    // Update cost change indicator
+    updateCostChangeIndicator(data);
 }
 
 function updateCharts(data) {
     // Update daily cost chart
-    if (data.dailyCosts && data.dailyCosts.ResultsByTime) {
-        updateDailyCostChart(data.dailyCosts);
+    if (data.daily_costs && data.daily_costs.ResultsByTime) {
+        updateDailyCostChart(data.daily_costs);
     }
     
     // Update service cost chart
-    if (data.serviceCosts && data.serviceCosts.ResultsByTime) {
-        updateServiceChart(data.serviceCosts);
+    if (data.service_costs && data.service_costs.ResultsByTime) {
+        updateServiceChart(data.service_costs);
     }
     
     // Update region cost chart
-    if (data.regionCosts && data.regionCosts.ResultsByTime) {
-        updateRegionChart(data.regionCosts);
+    if (data.region_costs && data.region_costs.ResultsByTime) {
+        updateRegionChart(data.region_costs);
     }
 }
 
@@ -312,6 +332,15 @@ function calculateTotalCost(data) {
     });
     
     return total;
+}
+
+function updateCostChangeIndicator(data) {
+    // This would calculate cost change percentage if historical data is available
+    // For now, just show a placeholder
+    const costChangeElement = document.getElementById('cost-change');
+    if (costChangeElement) {
+        costChangeElement.textContent = 'Data updated';
+    }
 }
 
 function updateLastRefresh() {

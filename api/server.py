@@ -22,6 +22,19 @@ CORS(app)  # Enable CORS for all routes
 DATA_PATH = os.environ.get('DATA_PATH', '/app/data')
 PORT = int(os.environ.get('PORT', 8081))
 
+@app.route('/api/cost-advisor', methods=['GET'])
+def get_cost_advisor():
+    """Get cost advisor insights"""
+    try:
+        account = request.args.get('account', 'account1')
+        advisor_file = get_latest_file('idle_resources_*.json', account)
+        if not advisor_file:
+            return jsonify({'error': 'No cost advisor data available'}), 404
+        advisor_data = load_json_file(advisor_file)
+        return jsonify(advisor_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 def get_latest_file(pattern: str, account: str = None) -> Optional[str]:
     """Find the most recent file matching the pattern"""
     if account:
@@ -311,6 +324,7 @@ def api_root():
         'cost_summary': '/api/cost-summary',
         'metrics': '/api/metrics',
         'search': '/api/search',
+        'cost_advisor': '/api/cost-advisor',
         'file_access': '/api/file/{account}/{filename}'
     }
     return jsonify({

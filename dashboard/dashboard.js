@@ -13,11 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeDashboard() {
-    // Initialize charts
-    initializeCharts();
-    
-    // Load available data files
-    loadDataFiles();
+// Initialize charts
+initializeCharts();
+
+// Load available data files
+loadDataFiles();
+
+// Load cost advisor insights
+loadCostAdvisorInsights();
 }
 
 function initializeCharts() {
@@ -127,6 +130,24 @@ function initializeCharts() {
             }
         }
     });
+}
+
+async function loadCostAdvisorInsights() {
+    try {
+        const response = await fetch('http://localhost:8081/api/cost-advisor');
+        if (response.ok) {
+            const advisorData = await response.json();
+            console.log('Loaded cost advisor data:', advisorData);
+            // Example of displaying advisor data
+            document.getElementById('cost-advisor').textContent = JSON.stringify(advisorData, null, 2);
+        } else {
+            console.warn('No cost advisor data available');
+            document.getElementById('cost-advisor').textContent = 'No cost advisor data available.';
+        }
+    } catch (error) {
+        console.error('Error loading cost advisor data:', error);
+        document.getElementById('cost-advisor').textContent = 'Failed to load cost advisor data.';
+    }
 }
 
 async function loadData() {

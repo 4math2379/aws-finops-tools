@@ -39,6 +39,9 @@ This repository provides a containerized approach to AWS cost management, financ
 - **RI Optimization**: Reserved Instance utilization and recommendations
 - **Cost Forecasting**: Predictive analytics for future spending
 - **CSV Export**: Generate cost reports in CSV format for further analysis
+- **Web Dashboard**: Interactive visualization of cost data and trends
+- **REST API**: Programmatic access to all cost data and reports
+- **Real-time Updates**: Automatic data refresh and live metrics
 
 ## Supported AWS Services & Tools
 
@@ -189,6 +192,52 @@ Inside any container, you can run the following scripts:
    ```bash
    ./aggregate-costs.sh
    ```
+
+10. **Run Demo (All Scripts)**
+    ```bash
+    ./run-demo.sh
+    ```
+
+## Data Visualization
+
+### Web Dashboard
+Access the interactive web dashboard at `http://localhost:8080` after starting the services.
+
+**Features:**
+- **Real-time Metrics**: Total costs, forecasted costs, RI utilization, Savings Plans utilization
+- **Interactive Charts**: Daily cost trends, cost distribution by service and region
+- **Account Status**: Live status of all account containers and data freshness
+- **File Browser**: Direct access to all generated JSON reports
+- **Auto-refresh**: Updates every 5 minutes automatically
+
+### REST API
+Access the REST API at `http://localhost:8081` for programmatic data access.
+
+**Key Endpoints:**
+- `GET /api/health` - API health check
+- `GET /api/latest-data` - Latest cost data for dashboard
+- `GET /api/accounts` - List all available accounts
+- `GET /api/files` - List all data files
+- `GET /api/cost-summary` - Cost summary across accounts
+- `GET /api/metrics` - Key metrics for dashboard
+- `GET /api/file/{account}/{filename}` - Download specific file
+
+### Starting the Visualization Services
+
+```bash
+# Start all services including dashboard and API
+docker-compose up -d
+
+# Access the web dashboard
+open http://localhost:8080
+
+# Check API health
+curl http://localhost:8081/api/health
+
+# Generate sample data
+docker-compose exec awscli-account1 bash
+./run-demo.sh
+```
 
 ## Real-World Benefits
 

@@ -50,7 +50,7 @@ function generate_cost_advisor_report() {
     # Get rightsizing recommendations
     echo "Getting rightsizing recommendations..."
     aws ce get-rightsizing-recommendation \
-        --service "AmazonEC2-Instance" \
+        --service "AmazonEC2" \
         --output json > "$OUTPUT_DIR/rightsizing_recommendations_${TIMESTAMP}.json" 2>/dev/null
 
     # Get cost optimization recommendations
@@ -65,7 +65,7 @@ function generate_cost_advisor_report() {
     # Get Reserved Instance recommendations
     echo "Getting Reserved Instance recommendations..."
     aws ce get-reservation-purchase-recommendation \
-        --service "AmazonEC2-Instance" \
+        --service "Amazon Elastic Compute Cloud - Compute" \
         --output json > "$OUTPUT_DIR/ri_recommendations_${TIMESTAMP}.json" 2>/dev/null
 
     # Get Savings Plans recommendations

@@ -24,8 +24,12 @@ check_cost_explorer() {
     echo -e "${YELLOW}Checking Cost Explorer status...${NC}"
     
     # Try to get cost and usage data to check if Cost Explorer is enabled
+    # Use a more recent date range (last 7 days)
+    END_DATE=$(date +"%Y-%m-%d")
+    START_DATE=$(date -d "7 days ago" +"%Y-%m-%d")
+    
     aws ce get-cost-and-usage \
-        --time-period Start="2024-01-01",End="2024-01-02" \
+        --time-period Start="$START_DATE",End="$END_DATE" \
         --granularity DAILY \
         --metrics "BlendedCost" \
         --output json > /tmp/ce_test.json 2>&1
@@ -90,7 +94,7 @@ test_cost_explorer_apis() {
     # Test rightsizing recommendations
     echo "Testing rightsizing recommendations..."
     aws ce get-rightsizing-recommendation \
-        --service "AmazonEC2-Instance" \
+        --service "AmazonEC2" \
         --output json > "$OUTPUT_DIR/test_rightsizing_${TIMESTAMP}.json" 2>&1
     
     if [ $? -eq 0 ]; then
@@ -111,7 +115,7 @@ test_cost_explorer_apis() {
     # Test reservation recommendations
     echo "Testing reservation recommendations..."
     aws ce get-reservation-purchase-recommendation \
-        --service "AmazonEC2-Instance" \
+        --service "Amazon Elastic Compute Cloud - Compute" \
         --output json > "$OUTPUT_DIR/test_ri_recommendations_${TIMESTAMP}.json" 2>&1
     
     if [ $? -eq 0 ]; then
